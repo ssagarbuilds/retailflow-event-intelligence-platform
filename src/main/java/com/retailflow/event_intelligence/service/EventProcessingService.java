@@ -10,6 +10,7 @@ import com.retailflow.event_intelligence.repository.EventAuditRepository;
 import com.retailflow.event_intelligence.repository.ProcessedEventRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.cache.annotation.CacheEvict;
 
 import java.time.Instant;
 
@@ -30,6 +31,7 @@ public class EventProcessingService {
         this.processedEventRepository = processedEventRepository;
     }
 
+    @CacheEvict(value = "entityState", key = "#request.entityId")
     @Transactional
     public BusinessEventResponse process(BusinessEventRequest request) {
         if (processedEventRepository.existsById(request.eventId())) {

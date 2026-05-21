@@ -1,5 +1,6 @@
 package com.retailflow.event_intelligence.api;
 
+import java.io.Serializable;
 import java.time.Instant;
 
 public record EntityStateResponse(
@@ -9,6 +10,6 @@ public record EntityStateResponse(
         String lastEventId,
         String lastSourceSystem,
         Instant updatedAt
-) {
+) implements Serializable {
 }
 

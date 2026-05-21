@@ -1,0 +1,11 @@
+type Query {
+    entityState(entityId: String!): EntityState
+}
+
+type EntityState {
+    entityId: String
+    entityType: String
+    currentStatus: String
+    lastEventId: String
+    lastSourceSystem: String
+}

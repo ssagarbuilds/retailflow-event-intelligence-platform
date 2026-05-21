@@ -1,6 +1,6 @@
 package com.retailflow.event_intelligence.api;
 
-import com.retailflow.event_intelligence.service.EventProcessingService;
+import com.retailflow.event_intelligence.service.BusinessEventIngestionService;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -13,16 +13,16 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping("/events")
 public class EventController {
 
-    private final EventProcessingService eventProcessingService;
+    private final BusinessEventIngestionService ingestionService;
 
-    public EventController(EventProcessingService eventProcessingService) {
-        this.eventProcessingService = eventProcessingService;
+    public EventController(BusinessEventIngestionService ingestionService) {
+        this.ingestionService = ingestionService;
     }
 
     @PostMapping
     @ResponseStatus(HttpStatus.ACCEPTED)
     public BusinessEventResponse processEvent(@Valid @RequestBody BusinessEventRequest request) {
-        return eventProcessingService.process(request);
+        return ingestionService.ingest(request);
     }
 }
 

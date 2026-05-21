@@ -3,6 +3,7 @@ package com.retailflow.event_intelligence.config;
 import com.retailflow.event_intelligence.api.BusinessEventRequest;
 import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.clients.producer.ProducerConfig;
+import org.apache.kafka.common.TopicPartition;
 import org.apache.kafka.common.serialization.StringDeserializer;
 import org.apache.kafka.common.serialization.StringSerializer;
 import org.springframework.beans.factory.annotation.Value;
@@ -15,8 +16,11 @@ import org.springframework.kafka.core.DefaultKafkaConsumerFactory;
 import org.springframework.kafka.core.DefaultKafkaProducerFactory;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.kafka.core.ProducerFactory;
+import org.springframework.kafka.listener.DefaultErrorHandler;
+import org.springframework.kafka.listener.DeadLetterPublishingRecoverer;
 import org.springframework.kafka.support.serializer.JsonDeserializer;
 import org.springframework.kafka.support.serializer.JsonSerializer;
+import org.springframework.util.backoff.FixedBackOff;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -71,10 +75,28 @@ public class KafkaConfig {
     }
 
     @Bean
-    public ConcurrentKafkaListenerContainerFactory<String, BusinessEventRequest> businessEventKafkaListenerContainerFactory() {
+    public DeadLetterPublishingRecoverer deadLetterPublishingRecoverer(KafkaTemplate<String, Object> kafkaTemplate) {
+        return new DeadLetterPublishingRecoverer(
+                kafkaTemplate,
+                (record, exception) -> new TopicPartition(
+                        KafkaTopics.BUSINESS_EVENTS_DEAD_LETTER,
+                        record.partition()
+                )
+        );
+    }
+
+    @Bean
+    public DefaultErrorHandler kafkaErrorHandler(DeadLetterPublishingRecoverer recoverer) {
+        return new DefaultErrorHandler(recoverer, new FixedBackOff(0L, 0L));
+    }
+
+    @Bean
+    public ConcurrentKafkaListenerContainerFactory<String, BusinessEventRequest>
+    businessEventKafkaListenerContainerFactory(DefaultErrorHandler kafkaErrorHandler) {
         ConcurrentKafkaListenerContainerFactory<String, BusinessEventRequest> factory =
                 new ConcurrentKafkaListenerContainerFactory<>();
         factory.setConsumerFactory(businessEventConsumerFactory());
+        factory.setCommonErrorHandler(kafkaErrorHandler);
         return factory;
     }
 }
